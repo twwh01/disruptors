@@ -1,0 +1,394 @@
+# clear the decks ----
+rm(list = ls())
+
+# load packages ----
+library(openxlsx2)
+library(dplyr)
+library(forcats)
+library(ggplot2)
+
+
+# parameters ----
+## directories ----
+dir_data <- file.path("data")
+dir_plots <- file.path("plots")
+
+## time scale ----
+data_time_scale <- data.frame(
+  label = c("seconds", "years", "decades", "centuries", "kiloyears", "megayears", "gigayears"),
+  value = c(1.00e-7, 1.00e0, 1.00e1, 1.00e2, 1.00e3, 1.00e6, 1.00e9)
+)
+
+## plot parameters ----
+line_width <- 4 # in /.pt units
+point_size <- 10 # in /.pt untis
+plot_palette <- viridis::viridis(n = 5, begin = 0.1, end = 0.8)
+
+# load data ----
+infile <- openxlsx2::wb_load(
+  file = file.path(dir_data, "disruptors_supplementary_data_tables_s1-s5.xlsx")
+  )
+data_event_durations <- infile %>% 
+  openxlsx2::wb_to_df(
+    sheet = "table_s3_events", start_row = 1, skip_empty_rows = TRUE, skip_empty_cols = TRUE
+  )
+
+data_event_biosphere <- infile %>%
+  openxlsx2::wb_to_df(
+    sheet = "table_s5_biosphere_changes", 
+    start_row = 1, cols = c(1:11), skip_empty_rows = TRUE, skip_empty_cols = TRUE
+  ) %>%
+  dplyr::select(-change_group) %>%
+  dplyr::mutate(change_value = as.numeric(change_value))
+
+# sort data ----
+data_to_plot <- data_event_durations %>%
+  dplyr::right_join(
+    data_event_biosphere, 
+    by = names(data_event_durations)[names(data_event_durations) %in% names(data_event_biosphere)],
+  ) %>%
+  dplyr::mutate(
+    across(c(change_value, event_duration_min_yr, event_duration_max_yr, event_duration_est_yr),
+           as.numeric
+    ),
+    interval_abbreviation = case_when(
+      big5 == "yes" ~ paste0("†", interval_abbreviation), 
+      .default = interval_abbreviation
+    )
+  ) %>%
+  dplyr::mutate(
+    event_duration_est_yr = case_when(
+      is.na(event_duration_est_yr) ~ 0.5*(event_duration_max_yr + event_duration_min_yr),
+      .default = event_duration_est_yr
+    )
+  ) %>%
+  dplyr::group_by(
+    interval_abbreviation, 
+    age_estimate_ma,
+    change_type, 
+    event_duration_est_yr, 
+    event_duration_min_yr, 
+    event_duration_max_yr,
+    percentage_change_rate_Myr,
+    type
+  ) %>%
+  dplyr::summarise(
+    change_min = case_when(
+      min(change_value, na.rm = TRUE) == 0 ~ 0,
+      abs(min(change_value, na.rm = TRUE)) <= 1 ~ 0,
+      min(change_value, na.rm = TRUE) < 0 ~ -1*log10(abs(min(change_value, na.rm = TRUE))),
+      .default = log10(min(change_value, na.rm = TRUE))
+    ), 
+    change_max = case_when(
+      max(change_value, na.rm = TRUE) == 0 ~ 0,
+      abs(max(change_value, na.rm = TRUE)) <= 1 ~ 0,
+      max(change_value, na.rm = TRUE) < 0 ~ -1*log10(abs(max(change_value, na.rm = TRUE))),
+      .default = log10(max(change_value, na.rm = TRUE))
+    ), 
+    change_mean = case_when(
+      mean(change_value, na.rm = TRUE) == 0 ~ 0,
+      abs(mean(change_value, na.rm = TRUE)) <= 1 ~ 0,
+      mean(change_value, na.rm = TRUE) < 0 ~ -1*log10(abs(mean(change_value, na.rm = TRUE))),
+      .default = log10(mean(change_value, na.rm = TRUE))
+    ), 
+    change_rate_mean = case_when(
+      mean(percentage_change_rate_Myr, na.rm = TRUE) == 0 ~ 0,
+      abs(mean(percentage_change_rate_Myr, na.rm = TRUE)) <= 1 ~ 0,
+      mean(percentage_change_rate_Myr, na.rm = TRUE) < 0 ~ -1*log10(abs(mean(percentage_change_rate_Myr, na.rm = TRUE))),
+      .default = log10(mean(percentage_change_rate_Myr, na.rm = TRUE))
+    ),
+    .groups = "keep"
+  ) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(
+    interval_abbreviation = ordered(
+      forcats::fct_reorder2(interval_abbreviation, desc(interval_abbreviation), age_estimate_ma)
+    ),
+    type_labels = dplyr::case_when(
+      type == "humans so far" ~ "humans",
+      type == "business as usual" ~ "humans",
+      type == "sustainable stewardship" ~ "humans",
+      .default = type
+    )
+  )
+
+
+# plot figure 2: timescales ----
+fig2_timescales <- data_to_plot %>%
+  ggplot(aes(y = interval_abbreviation, colour = type_labels)) +
+  scale_x_log10() +
+  scale_y_discrete() +
+  scale_colour_manual(
+    values = c("persistent" = "steelblue", "humans" = "black", "transient" = "red"),
+    name = "Disruptor type"
+  ) +
+  coord_cartesian(
+    xlim = c(1.00e-08, 1.000e+11),
+    ylim = c(-7, as.numeric(max(data_to_plot$interval_abbreviation))+0.5),
+    clip = "off"
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "inside",
+    legend.justification = c(0, 0), 
+    legend.position.inside = c(0.05, 0.25),
+    legend.box.background = element_rect(colour = "black"),
+    legend.box.margin = margin(4,4,4,4),
+    legend.title = element_text(size = point_size, face = "bold"),
+    legend.text = element_text(size = point_size)
+  ) +
+  # add axes as annotations
+  annotate(geom = "linerange", y = 0, xmin = 1.00e-08, xmax = 1.000e+10,
+           linewidth = line_width/.pt, colour = "black"
+  ) +
+  annotate(geom = "text", y = -0.5,x = data_time_scale$value, label = data_time_scale$label,
+           angle = 90, hjust = 1, vjust = 0, size = (point_size+2)/.pt, fontface = "bold"
+  ) +
+  annotate(geom = "text",
+           y = data_to_plot$interval_abbreviation, x = data_to_plot$event_duration_min_yr,
+           label = data_to_plot$interval_abbreviation,
+           angle = 0, hjust = 1.1, vjust = 0.3, size = point_size/.pt, fontface = "bold"
+  ) +
+  annotate(geom = "text", 
+           y = data_to_plot$interval_abbreviation, x = data_to_plot$event_duration_max_yr,
+           label = paste0("(", as.numeric(data_to_plot$age_estimate_ma), " Ma)"),
+           angle = 0, hjust = -0.1, vjust = 0.3, size = point_size/.pt, fontface = "italic"
+  ) +
+  annotate(geom = "rect",
+           xmin = min(data_to_plot$event_duration_min_yr[data_to_plot$type_labels == "persistent"], na.rm = TRUE), 
+           xmax = max(data_to_plot$event_duration_max_yr[data_to_plot$type_labels == "persistent"], na.rm = TRUE), 
+           ymin = 0, ymax = Inf, alpha = 0.1, colour = NA, fill = "steelblue"
+  ) +
+  annotate(geom = "rect", 
+           xmin = min(data_to_plot$event_duration_min_yr[data_to_plot$type_labels == "transient"], na.rm = TRUE), 
+           xmax = max(data_to_plot$event_duration_max_yr[data_to_plot$type_labels == "transient"], na.rm = TRUE), 
+           ymin = 0, ymax = Inf, alpha = 0.1, colour = NA, fill = "red"
+  ) +
+  # add data
+  geom_linerange(aes(xmin = event_duration_min_yr, xmax = event_duration_max_yr)) +
+  geom_point(aes(x = event_duration_est_yr))
+print(fig2_timescales)
+
+ggsave(
+  filename = file.path(dir_plots, "fig_2_event_timescales.png"),
+  plot = fig2_timescales, 
+  width = 169.9,
+  height = 150,
+  units = "mm",
+  dpi = 600,
+  bg = "white"
+)  
+
+# plot figure 3: habitability change and duration ----
+habitability_lim_max <- max(data_to_plot$change_max, na.rm = TRUE)
+habitability_lim_min <- min(data_to_plot$change_min, na.rm = TRUE)
+habitability_lim <- max(abs(habitability_lim_max), abs(habitability_lim_min), na.rm = TRUE) + 1
+
+fig3_habitability <- data_to_plot %>% 
+  dplyr::mutate(
+    type = ordered(type, 
+                   levels = c("persistent", "sustainable stewardship",
+                              "humans so far", "business as usual", "transient")
+    ),
+    change_type = ordered(change_type,
+                          levels = c("species", "genus", "biomass", "productivity")
+    ),
+    type_labels = dplyr::case_when(type_labels == "humans" ~ "humans", 
+                                   .default = "geological")
+  ) %>%
+  ggplot(aes(fill = type, colour = type, alpha = type_labels, size = type_labels, 
+             shape = change_type)) +
+  scale_x_log10() +
+  scale_y_continuous(limits = c(-1*habitability_lim, habitability_lim)) +
+  scale_shape_manual(values = c(21:24), name = "Biosphere variable") +
+  scale_fill_manual(values = c("persistent" = plot_palette[5], 
+                               "sustainable stewardship" = plot_palette[4], 
+                               "humans so far" = "black", # plot_palette[3],
+                               "business as usual" = plot_palette[2], 
+                               "transient" = plot_palette[1] 
+                               ),
+                    aesthetics = c("colour", "fill"), 
+                    name = "Disruptor type"
+  ) +
+  scale_alpha_manual(values = c("geological" = 0.5, "humans" = 0.75),
+                     breaks = c("humans", "geological"),
+                     name = "Scope"
+  ) +
+  scale_size_manual(values = c("geological" = point_size/.pt, "humans" = 2*(point_size/.pt)),
+                    breaks = c("humans", "geological"),
+                    name = "Scope"
+  ) +
+  coord_cartesian(ylim = c(-1*(habitability_lim+(0.32*habitability_lim)), habitability_lim),
+                  clip = "off"
+  ) +
+  theme_void() +
+  theme(
+    legend.position = "inside",
+    legend.justification = c(0, 1),
+    legend.position.inside = c(0.125, 0.95),
+    legend.direction = "vertical",
+    legend.box = "horizontal", 
+    legend.box.background = element_rect(colour = "black"),
+    legend.box.margin = margin(4,4,4,4),
+    legend.title = element_text(size = point_size-1,face = "bold"),
+    legend.text = element_text(size = point_size-2)
+  ) +
+  labs(x = "Log(duration in years)", y = "Planetary habitability") +
+  # add axes as annotations
+  ## x-axis
+  annotate(geom = "linerange", y = -1*(habitability_lim), xmin = 1.00e-08, xmax = 1.000e+10,
+           linewidth = line_width/.pt, colour = "black"
+  ) +
+  annotate(geom = "text", y = -1*(habitability_lim), x = data_time_scale$value,
+           label = data_time_scale$label,
+           angle = 90, hjust = 1.1, vjust = 0, size = (point_size+2)/.pt, fontface = "bold"
+  ) +
+  ## y-axis
+  annotate(geom = "segment", x = 1.00e-09, xend = 1.00e-09, y = 0.1, yend = habitability_lim-1,
+           linewidth = 1*line_width/.pt, colour = plot_palette[4], 
+           arrow = arrow(length = unit(0.3, "cm")), lineend = "round", linejoin = "bevel"
+  ) +
+  annotate(geom = "text", x = 1.00e-10, y = 0.5*(habitability_lim-1),
+           label = "biosphere\nnet gain", 
+           colour = plot_palette[4], angle = 90, size = (point_size+2)/.pt, fontface = "bold"
+  ) +
+  annotate(geom = "segment", x = 1.00e-09, xend = 1.00e-09, y = -0.1, yend = -1*(habitability_lim-1),
+           linewidth = 1*line_width/.pt, colour = plot_palette[2], 
+           arrow = arrow(length = unit(0.3, "cm")), lineend = "round", linejoin = "bevel"
+  ) +
+  annotate(geom = "text", x = 1.00e-10, y = -0.5*(habitability_lim-1),
+           label = "biosphere\nnet loss",
+           colour = plot_palette[2], angle = 90, size = (point_size+2)/.pt, fontface = "bold"
+  ) +
+  geom_segment(aes(x = 1.00e-10, xend = 1.00e10, y = 0, yend = 0), 
+               linetype = "dashed", linewidth = line_width/.pt, colour = "grey50"
+  ) +
+  # add data
+  ## add duration range line
+  geom_linerange(aes(y = change_mean, xmin = event_duration_min_yr, xmax = event_duration_max_yr),
+                 linewidth = 0.5*(line_width/.pt)
+  ) +
+  ## add habitability change line
+  geom_linerange(aes(x = event_duration_est_yr, ymin = change_min, ymax = change_max),
+                 linewidth = 0.5*(line_width/.pt)
+  ) +
+  ## add central estimate point
+  geom_point(aes(x = event_duration_est_yr, y = change_mean), stroke = line_width/.pt) 
+print(fig3_habitability)
+
+ggsave(
+  filename = file.path(dir_plots, "fig_3_deep_time_habitability.png"),
+  plot = fig3_habitability, 
+  width = 169.9,
+  height = 150,
+  units = "mm",
+  dpi = 600,
+  bg = "white"
+  )  
+
+
+# plot figure 5: change rates ----
+data_to_plot_rates <- data_to_plot %>%
+  dplyr::mutate(
+    type = ordered(type, 
+                   levels = c("persistent", "sustainable stewardship", "humans so far",
+                              "business as usual", "transient")
+    ),
+    change_type = ordered(change_type,
+                          levels = c("species", "genus", "biomass", "productivity")
+    ),
+    type_labels = dplyr::case_when(type_labels == "humans" ~ "humans",
+                                   .default = "geological")
+  ) %>%
+  dplyr::mutate(interval_abbreviation = forcats::fct_reorder(
+    .f = interval_abbreviation, .x = change_rate_mean, .fun = min, .na.rm = TRUE) 
+  )
+
+data_to_plot_rates_labels <- data_to_plot_rates %>%
+  dplyr::group_by(interval_abbreviation, age_estimate_ma, ) %>%
+  dplyr::summarise(min_rate = min(change_rate_mean, na.rm = TRUE),
+                   max_rate = max(change_rate_mean, na.rm = TRUE)
+  )
+
+fig5_rates_of_change <- data_to_plot_rates %>%
+  ggplot(
+    aes(x = change_rate_mean, y = interval_abbreviation, 
+        fill = type, colour = type,
+        alpha = type_labels, size = type_labels,
+        shape = change_type
+    )
+  ) +
+  scale_x_continuous(expand = expansion(add = 2),
+                     name = expression("rate of biosphere variable change (pseudo-log"[10]*" scale)")
+  ) +
+  scale_y_discrete(
+    # name = "Biosphere disruptors ordered from highest negative rate to highest positive rate"
+  ) +
+  scale_shape_manual(values = c(21:24), name = "Biosphere variable") +
+  scale_fill_manual(values = c("persistent" = plot_palette[5], 
+                               "sustainable stewardship" = plot_palette[4], 
+                               "humans so far" = "black", # plot_palette[3],
+                               "business as usual" = plot_palette[2], 
+                               "transient" = plot_palette[1] 
+                    ),
+                    aesthetics = c("colour", "fill"),
+                    name = "Disruptor type"
+  ) +
+  scale_alpha_manual(values = c("geological" = 0.5, "humans" = 0.75),
+                     breaks = c("humans", "geological"), 
+                     name = "Scope"
+  ) +
+  scale_size_manual(values = c("geological" = point_size/.pt, "humans" = 2*(point_size/.pt)),
+                    breaks = c("humans", "geological"),
+                    name = "Scope"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_blank(), 
+    axis.title.y = element_blank(),
+    axis.text.x = element_text(size = point_size,
+                               margin = margin(10,0,2,0, unit = "pt"),
+                               vjust = 1
+    ),
+    panel.grid = element_blank(), 
+    legend.position = "inside",
+    legend.justification = c(0, 1),
+    legend.position.inside = c(0, 1),
+    legend.box.background = element_rect(colour = "black"),
+    legend.box.margin = margin(4,4,4,4, unit = "pt"),
+    legend.title = element_text(size = (point_size-2), face = "bold"),
+    legend.text = element_text(size = (point_size-2))
+  ) +
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = line_width/.pt, colour = "grey50") +
+  geom_hline(yintercept = 0, linetype = "solid", linewidth = line_width/.pt, colour = "black") +
+  annotate(geom = "text",
+           x = data_to_plot_rates_labels$min_rate - 0.4,
+           y = data_to_plot_rates_labels$interval_abbreviation, 
+           label = data_to_plot_rates_labels$interval_abbreviation, 
+           fill = "white", label.size = NA, angle = 0, hjust = 1, vjust = 0.5,
+           size = (point_size-2)/.pt
+  ) +
+  annotate(geom = "text",
+           x = data_to_plot_rates_labels$max_rate + 0.3,
+           y = data_to_plot_rates_labels$interval_abbreviation, 
+           label = paste0("(", data_to_plot_rates_labels$age_estimate_ma, " Ma)"),
+           fill = "white", label.size = NA, angle = 0, hjust = 0, vjust = 0.5,
+           size = (point_size-2)/.pt, fontface = "italic"
+  ) +
+  coord_cartesian(clip = "off") +
+  geom_point()
+print(fig5_rates_of_change)
+
+ggsave(
+  filename = file.path(dir_plots, "fig_5_rates_of_change_ordered.png"),
+  plot = fig5_rates_of_change, 
+  width = 169.6,
+  height = 160,
+  units = "mm",
+  dpi = 600,
+  bg = "white"
+)  
+
+
+# END ----
+
