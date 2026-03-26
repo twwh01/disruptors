@@ -186,6 +186,10 @@ habitability_lim <- max(abs(habitability_lim_max), abs(habitability_lim_min), na
 
 fig3_habitability <- data_to_plot %>% 
   dplyr::mutate(
+    event_duration_min_yr = dplyr::case_when(
+      event_duration_min_yr < 2e-01 ~ 2e-01, 
+      .default = event_duration_min_yr
+    ),
     type = ordered(type, 
                    levels = c("persistent", "sustainable stewardship",
                               "humans so far", "business as usual", "transient")
@@ -196,71 +200,57 @@ fig3_habitability <- data_to_plot %>%
     type_labels = dplyr::case_when(type_labels == "humans" ~ "humans", 
                                    .default = "geological")
   ) %>%
-  ggplot(aes(fill = type, colour = type, alpha = type_labels, size = type_labels, 
+  ggplot(aes(colour = type, fill = type, 
+             alpha = type_labels, size = type_labels, 
              shape = change_type)) +
-  scale_x_log10() +
-  scale_y_continuous(limits = c(-1*habitability_lim, habitability_lim)) +
-  scale_shape_manual(values = c(21:24), name = "Biosphere variable") +
-  scale_fill_manual(values = c("persistent" = plot_palette[5], 
-                               "sustainable stewardship" = plot_palette[4], 
-                               "humans so far" = "black", # plot_palette[3],
-                               "business as usual" = plot_palette[2], 
-                               "transient" = plot_palette[1] 
-                               ),
-                    aesthetics = c("colour", "fill"), 
-                    name = "Disruptor type"
-  ) +
-  scale_alpha_manual(values = c("geological" = 0.5, "humans" = 0.75),
-                     breaks = c("humans", "geological"),
-                     name = "Scope"
-  ) +
-  scale_size_manual(values = c("geological" = point_size/.pt, "humans" = 2*(point_size/.pt)),
-                    breaks = c("humans", "geological"),
-                    name = "Scope"
-  ) +
-  coord_cartesian(ylim = c(-1*(habitability_lim+(0.32*habitability_lim)), habitability_lim),
-                  clip = "off"
-  ) +
   theme_void() +
   theme(
+    axis.title = element_text(size = point_size), 
+    axis.title.y = element_text(angle = 90, hjust = 0.6),
     legend.position = "inside",
     legend.justification = c(0, 1),
-    legend.position.inside = c(0.125, 0.95),
+    legend.position.inside = c(0.09, 0.98),
     legend.direction = "vertical",
     legend.box = "horizontal", 
-    legend.box.background = element_rect(colour = "black"),
+    legend.box.background = element_blank(), # element_rect(colour = "black"),
     legend.box.margin = margin(4,4,4,4),
     legend.title = element_text(size = point_size-1,face = "bold"),
     legend.text = element_text(size = point_size-2)
   ) +
-  labs(x = "Log(duration in years)", y = "Planetary habitability") +
-  # add axes as annotations
-  ## x-axis
-  annotate(geom = "linerange", y = -1*(habitability_lim), xmin = 1.00e-08, xmax = 1.000e+10,
-           linewidth = line_width/.pt, colour = "black"
+  guides(colour = guide_legend(order = 1), 
+         fill = guide_legend(order = 1),
+         shape = guide_legend(order = 2), 
+         alpha = guide_legend(order = 3), 
+         size = guide_legend(order = 3)) +
+  labs(x = expression(bold("log"[10]*"(duration in years)")),
+       y = expression(bold("planetary habitability (pseudo-log"[10]*"[variable change])"))) +
+  scale_x_log10() +
+  scale_y_continuous() +
+  scale_shape_manual(values = c(21:24), name = "Biosphere variable") +
+  scale_colour_manual(values = c("persistent" = plot_palette[5],
+                                 "sustainable stewardship" = plot_palette[4],
+                                 "humans so far" = "black", # plot_palette[3],
+                                 "business as usual" = plot_palette[2],
+                                 "transient" = plot_palette[1]
+                                 ),
+                      aesthetics = c("colour", "fill"),
+                      name = "Disruptor type"
   ) +
-  annotate(geom = "text", y = -1*(habitability_lim), x = data_time_scale$value,
-           label = data_time_scale$label,
-           angle = 90, hjust = 1.1, vjust = 0, size = (point_size+2)/.pt, fontface = "bold"
+  scale_alpha_manual(values = c("geological" = 0.3, "humans" = 0.5),
+                     breaks = c("humans", "geological"),
+                     name = "Scope"
   ) +
-  ## y-axis
-  annotate(geom = "segment", x = 1.00e-09, xend = 1.00e-09, y = 0.1, yend = habitability_lim-1,
-           linewidth = 1*line_width/.pt, colour = plot_palette[4], 
-           arrow = arrow(length = unit(0.3, "cm")), lineend = "round", linejoin = "bevel"
+  scale_size_manual(values = c("geological" = 0.5*point_size/.pt, "humans" = 2*(point_size/.pt)),
+                    breaks = c("humans", "geological"),
+                    name = "Scope"
   ) +
-  annotate(geom = "text", x = 1.00e-10, y = 0.5*(habitability_lim-1),
-           label = "biosphere\nnet gain", 
-           colour = plot_palette[4], angle = 90, size = (point_size+2)/.pt, fontface = "bold"
+  coord_cartesian(
+    xlim = c(1e-01, NA),
+    ylim = c(-1*(habitability_lim+(0.3*habitability_lim)), habitability_lim),
+    clip = "on"
   ) +
-  annotate(geom = "segment", x = 1.00e-09, xend = 1.00e-09, y = -0.1, yend = -1*(habitability_lim-1),
-           linewidth = 1*line_width/.pt, colour = plot_palette[2], 
-           arrow = arrow(length = unit(0.3, "cm")), lineend = "round", linejoin = "bevel"
-  ) +
-  annotate(geom = "text", x = 1.00e-10, y = -0.5*(habitability_lim-1),
-           label = "biosphere\nnet loss",
-           colour = plot_palette[2], angle = 90, size = (point_size+2)/.pt, fontface = "bold"
-  ) +
-  geom_segment(aes(x = 1.00e-10, xend = 1.00e10, y = 0, yend = 0), 
+  # add biosphere midline
+  geom_segment(aes(x = 2e-01, xend = 2e+09, y = 0, yend = 0), 
                linetype = "dashed", linewidth = line_width/.pt, colour = "grey50"
   ) +
   # add data
@@ -273,7 +263,28 @@ fig3_habitability <- data_to_plot %>%
                  linewidth = 0.5*(line_width/.pt)
   ) +
   ## add central estimate point
-  geom_point(aes(x = event_duration_est_yr, y = change_mean), stroke = line_width/.pt) 
+  geom_point(aes(x = event_duration_est_yr, y = change_mean), stroke = line_width/.pt) +
+  # add axes as annotations
+  ## x-axis
+  annotate(geom = "linerange", y = -1*(habitability_lim), xmin = 1.5e-01, xmax = 1.000e+10,
+           linewidth = line_width/.pt, colour = "black") +
+  annotate(geom = "text", y = -1*(habitability_lim), x = data_time_scale$value,
+           label = data_time_scale$label,
+           angle = 90, hjust = 1.1, vjust = 0, size = point_size/.pt, fontface = "bold") +
+  ## y-axis
+  annotate(geom = "label", x = 7e-02, y = 0.5*(habitability_lim-1),
+           label = "biosphere net gain", fill = "white", border.colour = "white", 
+           colour = plot_palette[4], angle = 90, size = point_size/.pt, fontface = "bold"
+  ) +
+  annotate(geom = "label", x = 7e-02, y = -0.5*(habitability_lim-1),
+           label = "biosphere net loss", fill = "white", border.colour = "white", 
+           colour = plot_palette[2], angle = 90, size = point_size/.pt, fontface = "bold") + 
+  annotate(geom = "segment", x = 1.5e-01, xend = 1.5e-01, y = 0.1, yend = habitability_lim-1,
+           linewidth = 1*line_width/.pt, colour = plot_palette[4], 
+           arrow = arrow(length = unit(0.3, "cm")), lineend = "round", linejoin = "bevel") +
+  annotate(geom = "segment", x = 1.5e-01, xend = 1.5e-01, y = -0.1, yend = -1*(habitability_lim-1),
+           linewidth = 1*line_width/.pt, colour = plot_palette[2], 
+           arrow = arrow(length = unit(0.3, "cm")), lineend = "round", linejoin = "bevel") 
 print(fig3_habitability)
 
 ggsave(
