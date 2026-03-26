@@ -371,7 +371,7 @@ ggplot() +
         strip.background = element_blank(), 
         strip.text = element_text(size = 5*point_size, face = 'bold', vjust = 1)
   ) +
-  labs(x = expression(bold("log"[10]*"(years)")), y = "biosphere impact") +
+  labs(x = expression(bold("log"[10]*"(years)")), y = "planetary habitability") +
   facet_grid(~disruptor) +
   scale_x_log10(limits = c(x_t_min, 1e+09)) +
   coord_cartesian(ylim = c(-2, 2), clip = 'off') +
