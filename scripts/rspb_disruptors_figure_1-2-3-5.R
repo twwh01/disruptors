@@ -326,68 +326,57 @@ fig5_rates_of_change <- data_to_plot_rates %>%
     aes(x = change_rate_mean, y = interval_abbreviation, 
         fill = type, colour = type,
         alpha = type_labels, size = type_labels,
-        shape = change_type
-    )
-  ) +
+        shape = change_type)) +
   scale_x_continuous(expand = expansion(add = 2),
-                     name = expression("rate of biosphere variable change (pseudo-log"[10]*" scale)")
-  ) +
-  scale_y_discrete(
-    # name = "Biosphere disruptors ordered from highest negative rate to highest positive rate"
-  ) +
+                     name = expression("pseudo-log"[10]*"(% variable change per Myr)")) +
+  scale_y_discrete() +
   scale_shape_manual(values = c(21:24), name = "Biosphere variable") +
   scale_fill_manual(values = c("persistent" = plot_palette[5], 
                                "sustainable stewardship" = plot_palette[4], 
                                "humans so far" = "black", # plot_palette[3],
                                "business as usual" = plot_palette[2], 
-                               "transient" = plot_palette[1] 
-                    ),
+                               "transient" = plot_palette[1]),
                     aesthetics = c("colour", "fill"),
-                    name = "Disruptor type"
-  ) +
+                    name = "Disruptor type") +
   scale_alpha_manual(values = c("geological" = 0.5, "humans" = 0.75),
                      breaks = c("humans", "geological"), 
-                     name = "Scope"
-  ) +
+                     name = "Scope") +
   scale_size_manual(values = c("geological" = point_size/.pt, "humans" = 2*(point_size/.pt)),
                     breaks = c("humans", "geological"),
-                    name = "Scope"
-  ) +
+                    name = "Scope") +
   theme_minimal() +
   theme(
     axis.text.y = element_blank(), 
     axis.title.y = element_blank(),
     axis.text.x = element_text(size = point_size,
                                margin = margin(10,0,2,0, unit = "pt"),
-                               vjust = 1
-    ),
+                               vjust = 1),
     panel.grid = element_blank(), 
     legend.position = "inside",
     legend.justification = c(0, 1),
     legend.position.inside = c(0, 1),
-    legend.box.background = element_rect(colour = "black"),
+    legend.box.background = element_rect(colour = "white"),
     legend.box.margin = margin(4,4,4,4, unit = "pt"),
     legend.title = element_text(size = (point_size-2), face = "bold"),
-    legend.text = element_text(size = (point_size-2))
-  ) +
-  geom_vline(xintercept = 0, linetype = "dashed", linewidth = line_width/.pt, colour = "grey50") +
+    legend.text = element_text(size = (point_size-2))) +
+  geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.5*line_width/.pt, colour = "grey75") +
   geom_hline(yintercept = 0, linetype = "solid", linewidth = line_width/.pt, colour = "black") +
+  geom_point() +
   annotate(geom = "text",
            x = data_to_plot_rates_labels$min_rate - 0.4,
            y = data_to_plot_rates_labels$interval_abbreviation, 
            label = data_to_plot_rates_labels$interval_abbreviation, 
-           fill = "white", label.size = NA, angle = 0, hjust = 1, vjust = 0.5,
-           size = (point_size-2)/.pt
-  ) +
+           angle = 0, hjust = 1, vjust = 0.5, size = (point_size-2)/.pt) +
   annotate(geom = "text",
            x = data_to_plot_rates_labels$max_rate + 0.3,
            y = data_to_plot_rates_labels$interval_abbreviation, 
            label = paste0("(", data_to_plot_rates_labels$age_estimate_ma, " Ma)"),
-           fill = "white", label.size = NA, angle = 0, hjust = 0, vjust = 0.5,
-           size = (point_size-2)/.pt, fontface = "italic"
-  ) +
+           angle = 0, hjust = 0, vjust = 0.5, size = (point_size-2)/.pt, fontface = "italic") +
   coord_cartesian(clip = "off") +
-  geom_point()
+  guides(fill = guide_legend(order = 1, override.aes = list(size = 5)), 
+         colour = guide_legend(order = 1, override.aes = list(size = 5)),
+         shape = guide_legend(order = 2, override.aes = list(size = 5)), 
+         alpha = guide_legend(order = 3), size = guide_legend(order = 3))
 print(fig5_rates_of_change)
 
 ggsave(
