@@ -32,8 +32,8 @@ library(dplyr)
 
 # plot parameters ----
 dir_plots <- file.path("plots")
-line_width <- 4/.pt # in /.pt units
-point_size <- 10/.pt # in /.pt untis
+line_width <- 1/.pt # in /.pt units
+point_size <- 5/.pt # in /.pt untis
 plot_palette <- viridis::viridis(n = 6, begin = 0.1, end = 0.9)
 
 
@@ -81,6 +81,7 @@ x_p_max <- 5e+08
 # humans may change course and enhance the biosphere (2e+02 < t < 3e+03)
 x_h <- 10**seq(from = 0.01, to = 4, by = 0.01)
 x_h_min <- 1e+01
+x_h_cur <- 2e+02 # human current
 x_h_max <- 3e+03
 
 ## transient disruptors functions ----
@@ -201,20 +202,20 @@ simple_p <- data.frame(
 )
 
 ### simple persistent fast ----
-# assume 1.5:1 linear increase to peak of +1.5 then plateau
+# assume 2:1 linear increase to peak of +2 then plateau
 fast_p_y <- function(x) {
   ifelse(
     # first segment before range of disruptor impact
     x < x_p_min, 
     0, 
     ifelse(
-      # second segment: linear increase gradient +1.5
-      x >= x_p_min & (1.5*(x - x_p_min) / (x_p_max - x_p_min)) <= 1,
-      1.5*(x - x_p_min) / (x_p_max - x_p_min),
+      # second segment: linear increase gradient +2
+      x >= x_p_min & (2*(x - x_p_min) / (x_p_max - x_p_min)) <= 2,
+      2*(x - x_p_min) / (x_p_max - x_p_min),
       ifelse(
-        # third segment: plateau at +1
+        # third segment: plateau at +2
         x <= x_p_max, 
-        1,
+        2,
         NA  # outside the defined domain
       )
     )  
@@ -278,9 +279,9 @@ human_t_y <- function(x) {
     x < x_h_min, 
     0, 
     ifelse(
-      # second segment: linear decrease to -1 at 3e+03 years
-      x >= x_h_min & x <= x_h_max,
-      -0.3 * ((x - x_h_min) / (x_h_max - x_h_min)),
+      # second segment: linear decrease to -0.4 at 3e+03 years
+      x >= x_h_min & x < x_h_max,
+      -0.4 * ((x - x_h_min) / (x_h_max - x_h_min)),
       NA  # outside the defined domain
     )
   )
@@ -331,11 +332,14 @@ disruptors <- rbind(
   initial_harm_p, 
   human_t, 
   human_p
-)
+) 
 
 ## summarise data ----
 disruptors_summary <- disruptors |> 
-  dplyr::group_by(x, disruptor) |> 
+  dplyr::mutate(
+    kpg = dplyr::case_when(version == "bolide impact" ~ "K-Pg")
+  ) |> 
+  dplyr::group_by(x, disruptor, kpg) |> 
   dplyr::summarise(
     lower_bound = min(y, na.rm = TRUE), 
     upper_bound = max(y, na.rm = TRUE), 
@@ -348,212 +352,111 @@ disruptors_summary <- disruptors |>
     disruptor = ordered(disruptor, levels = c("persistent", "transient", "human"))
   )
 
+disruptors_summary_main <- disruptors_summary |> dplyr::filter(is.na(kpg))
+disruptors_summary_kpg <- disruptors_summary |> 
+  dplyr::filter(!is.na(kpg)) |>
+  dplyr::mutate(
+    upper_bound = disruptors_summary_main$lower_bound[
+      disruptors_summary_main$disruptor == "transient" & disruptors_summary_main$x == x
+    ]
+  )
 
 # plot data ----
-disruptors_summary |> 
-  ggplot() +
+ggplot() +
   theme_void() +
   theme(plot.margin = margin(10, 10, 7, 10, unit = 'pt'), 
         axis.text = element_blank(), 
-        axis.title.y = element_text(size = 5*point_size, face = 'bold', angle = 90, vjust = 1, hjust = 0.65),
+        axis.title.y = element_text(size = 5*point_size, face = 'bold', angle = 90, vjust = 1, hjust = 0.5),
         axis.title.x = element_text(size = 5*point_size, face = 'bold', angle = 0, vjust = -1), 
         strip.background = element_blank(), 
         strip.text = element_text(size = 5*point_size, face = 'bold', vjust = 1)
   ) +
-  labs(x = expression(bold("log"[10]*"(time scale)")),
-       y = "biosphere impact"
-  ) +
+  labs(x = expression(bold("log"[10]*"(years)")), y = "biosphere impact") +
   facet_grid(~disruptor) +
   scale_x_log10(limits = c(x_t_min, 1e+09)) +
-  coord_cartesian(ylim = c(-1.81, 1), clip = 'off') +
-  scale_fill_viridis_d(aesthetics = c("fill", "colour"), begin = 0.2, end = 0.8, 
-                       guide = "none") +
+  coord_cartesian(ylim = c(-2, 2), clip = 'off') +
+  scale_fill_viridis_d(aesthetics = c("fill", "colour"), begin = 0.2, end = 0.8, guide = "none") +
   # add axes and annotations
-  annotate(
-    geom = "segment", 
-    x = x_t_min, xend = x_p_max, y = 0, 
-    colour = "grey50", linewidth = 0.7*line_width/.pt, linetype = "dashed"
+  ## zero line
+  annotate(geom = "segment", x = x_t_min, xend = x_p_max, y = 0, 
+           linetype = "dashed", colour = "grey50", linewidth = 0.5*line_width) +
+  ## 200 year line
+  annotate(geom = "segment", x = 2e+02, y = -1.3, yend = 2, 
+           linetype = "dashed", colour = "grey50", linewidth = 0.5*line_width) +
+  ## disruptor durations
+  annotate(geom = "rect", xmin = x_t_min, xmax = x_p_max, ymin = -1.2, ymax = -1.1,
+           alpha = 0.25, colour = NA, fill = viridis::viridis(n=3, begin = 0.2, end = 0.8)[1]) +
+  annotate(geom = "text", x = x_p_max, y = -1.15, label = expression(italic("persistent")),
+           colour = "black", size = 1.3*point_size, hjust = 1.1, vjust = 0.5) +
+  annotate(geom = "rect", xmin = x_t_min, xmax = x_t_max, ymin = -1.3, ymax = -1.2,
+           alpha = 0.25, colour = NA, fill = viridis::viridis(n=3, begin = 0.2, end = 0.8)[2]) +
+  annotate(geom = "text", x = x_t_max, y = -1.25, label = expression(italic("transient")),
+           colour = "black", size = 1.3*point_size, hjust = 1.1, vjust = 0.5) +
+  annotate(geom = "rect", xmin = x_h_min, xmax = x_h_max, ymin = -1.4, ymax = -1.3,
+           alpha = 0.25, colour = NA, fill = viridis::viridis(n=3, begin = 0.2, end = 0.8)[3]) +
+  annotate(geom = "text", x = x_h_max, y = -1.35, label = expression(italic("humans")),
+           colour = "black", size = 1.3*point_size, hjust = 1.1, vjust = 0.5) +
+  ## time axis
+  annotate(geom = "linerange", y = -1.4, xmin = x_t_min, xmax = max(x_p, na.rm = TRUE),
+           linewidth = line_width/.pt, colour = "black") +
+  geom_text(data = data_time_scale,
+            aes(x = value, y = -1.46, label = label),
+            angle = 90, hjust = 1, vjust = 0,
+            size = 1.5*point_size, colour = 'black', fontface = "bold") +
+  ## y-axis biosphere labels
+  geom_segment(
+    data = data.frame(
+      x = 1e+02, xend = 1e+02, y = 0.1, yend = 1, 
+      disruptor = ordered("persistent", levels = c("persistent", "transient", "human"))),
+    aes(x = x, xend = xend, y = y, yend = yend), 
+    linewidth = 1.7*line_width, colour = plot_palette[4], 
+    arrow = arrow(length = unit(0.2, "cm")), lineend = "round", linejoin = "bevel"
   ) +
-  annotate(
-    geom = "rect",
-    xmin = x_t_min, xmax = x_p_max,
-    ymin = -1.11, ymax = -1.01,
-    alpha = 0.25, colour = NA, fill = viridis::viridis(n=3, begin = 0.2, end = 0.8)[1] # "steelblue"
+  geom_text(data = data.frame(
+    x = 4e+01, y = 0.5, label = "net gain", 
+    disruptor = ordered("persistent", levels = c("persistent", "transient", "human"))),
+    aes(x = x, y = y, label = label), 
+    colour = plot_palette[4], vjust = 0.3, hjust = 0.4, angle = 90, size = 1.8*point_size, fontface = "bold"
   ) +
-  annotate(
-    geom = "text",
-    x = 4e+02, y = -1.055,
-    label = expression(italic("persistent")),
-    colour = "black", size = 1.4*point_size, hjust = 0, vjust = 0.4
+  geom_segment(
+    data = data.frame(
+      x = 1e+02, xend = 1e+02, y = -0.1, yend = -1, 
+      disruptor = ordered("persistent", levels = c("persistent", "transient", "human"))),
+    aes(x = x, xend = xend, y = y, yend = yend), 
+    linewidth = 1.7*line_width, colour = plot_palette[2], 
+    arrow = arrow(length = unit(0.2, "cm")), lineend = "round", linejoin = "bevel"
   ) +
-  annotate(
-    geom = "rect",
-    xmin = x_t_min, xmax = x_t_max,
-    ymin = -1.21, ymax = -1.11,
-    alpha = 0.25, colour = NA, fill = viridis::viridis(n=3, begin = 0.2, end = 0.8)[2]# "red"
+  geom_text(data = data.frame(
+    x = 4e+01, y = -0.5, label = "net loss", 
+    disruptor = ordered("persistent", levels = c("persistent", "transient", "human"))),
+    aes(x = x, y = y, label = label), 
+    colour = plot_palette[2], vjust = 0.3, hjust = 0.6, angle = 90, size = 1.8*point_size, fontface = "bold"
   ) +
-  annotate(
-    geom = "text",
-    x = 4e+02, y = -1.155,
-    label = expression(italic("transient")),
-    colour = "black", size = 1.4*point_size, hjust = 0, vjust = 0.3
-  ) +
-  annotate(
-    geom = "rect",
-    xmin = x_h_min, xmax = x_h_max,
-    ymin = -1.31, ymax = -1.21,
-    alpha = 0.25, colour = NA, fill = viridis::viridis(n=3, begin = 0.2, end = 0.8)[3]
-  ) +
-  annotate(
-    geom = "text",
-    x = 4e+02, y = -1.255,
-    label = expression(italic("humans")),
-    colour = "black", size = 1.4*point_size, hjust = 0, vjust = 0.3
-  ) +
-  annotate(
-    geom = "linerange",
-    y = -1.3,
-    xmin = x_t_min,
-    xmax = max(x_p, na.rm = TRUE),
-    linewidth = line_width/.pt,
-    colour = "black"
-  ) +
-  annotate(geom = "segment", x = 2e+02, y = -1.31, yend = 1, 
-           linetype = "dashed", colour = "black", linewidth = 0.75*line_width/.pt) +
+  # add data
+  ## main data
+  geom_ribbon(data = disruptors_summary_main,
+              aes(x = x, ymin = lower_bound, ymax = upper_bound, colour = disruptor, fill = disruptor), 
+              linewidth = 1*line_width/.pt, alpha = 0.25) +
+  geom_ribbon(data = disruptors_summary_kpg, 
+              aes(x = x, ymin = lower_bound, ymax = upper_bound), #colour = "bolide impact"),
+              colour = "black", fill = "grey50",
+              linetype = "dotted", linewidth = 2*line_width/.pt, alpha = 0.25) +
+  ## bolide impact data
   geom_text(
-    data = data_time_scale,
-    aes(x = value, y = -1.36, label = label),
-    angle = 90, hjust = 1, vjust = 0,
-    size = 1.4*point_size, colour = 'black', fontface = "bold"
-  ) +
-  geom_ribbon(aes(x = x, ymin = lower_bound, ymax = upper_bound, 
-                  colour = disruptor, fill = disruptor), 
-              linewidth = 0.7*line_width/.pt,
-              alpha = 0.25
-              )
+    data = data.frame(
+      x = 4e+02, y = -0.5, label = "bolide impact", 
+      disruptor = ordered("transient", levels = c("persistent", "transient", "human"))),
+    aes(x = x, y = y, label = label), 
+    hjust = 0, vjust = 0.5, fontface = "italic", size = 1.3*point_size)
+
 ggsave(
   filename = file.path(dir_plots, "fig_4_schematic.png"),
-  width = 300,
-  height = 175,
+  width = 170,
+  height = 99,
   units = "mm",
   dpi = 600,
   bg = "white"
 )
 
 
-# # OLD CODE ----
-# 
-# ## version 1 ----
-# ggplot() +
-#   theme_void() +
-#   theme(plot.margin = margin(10, 10, 7, 10, unit = 'pt'), 
-#         axis.text = element_blank(), 
-#         axis.title.y = element_text(face = 'bold', angle = 90, vjust = 1, hjust = 0.4),
-#         axis.title.x = element_text(face = 'bold', angle = 0, vjust = -1), 
-#         strip.background = element_blank(), 
-#         strip.text = element_text(face = 'bold', vjust = 1)
-#         ) +
-#   labs(x = expression(bold("log"[10]*"(time scale)")),
-#        y = "biosphere impact"
-#        ) +
-#   facet_grid(~disruptor) +
-#   scale_x_log10(limits = c(1e+02, 1e+09)) +
-#   coord_cartesian(ylim = c(-1.5, 2), clip = 'off') +
-#   scale_colour_discrete(palette = plot_palette) +
-#   # add axes as annotations
-#   annotate(
-#     geom = "linerange",
-#     y = -1.1,
-#     xmin = 0,
-#     xmax = 1e+09,
-#     linewidth = line_width/.pt,
-#     colour = "black"
-#   ) +
-#   geom_text(
-#     data = data_time_scale, 
-#     aes(x = value, y = -1.15, label = label), 
-#       angle = 90, hjust = 1, vjust = 0,
-#       size = (point_size+2)/.pt, colour = 'black', fontface = "bold"
-#   ) +
-#   annotate(
-#     geom = "rect",
-#     xmin = 0, xmax = 1e+08, 
-#     ymin = 0, ymax = Inf, 
-#     alpha = 0.1, colour = NA, fill = "steelblue"
-#   ) +
-#   annotate(
-#     geom = "rect",
-#     xmin = 0, xmax = 1e+06, 
-#     ymin = 0, ymax = -1.1, 
-#     alpha = 0.1, colour = NA, fill = "red"
-#   ) +
-#   geom_hline(yintercept = 0, colour = "grey50") +
-#   geom_line(
-#     data = disruptors, 
-#     aes(x = x, y = y,
-#         colour = version,
-#         linetype = disruptor
-#       ),
-#     linewidth = line_width/.pt
-#   )
-# ggsave(
-#   filename = file.path(dir_plots, "fig_X_schematic.png"),
-#   width = 500,
-#   height = 200,
-#   units = "mm",
-#   dpi = 600,
-#   bg = "white"
-# )  
-# 
-# ## version 2 ----
-# ggplot() +
-#   theme_minimal() +
-#   theme(plot.margin = margin(10, 10, 7, 10, unit = 'pt'), 
-#         axis.text.y = element_blank(), 
-#         axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.4),
-#         axis.title.y = element_text(face = 'bold', angle = 90, vjust = 1),
-#         axis.title.x = element_text(face = 'bold', angle = 0, vjust = -1), 
-#         axis.line.x = element_line(linewidth = 1),
-#         axis.ticks.x = element_line(),
-#         panel.grid.minor = element_blank(),
-#         panel.grid.major = element_blank(),
-#         strip.background = element_blank(), 
-#         strip.text = element_text(face = 'bold', vjust = 1, hjust = 0.6)
-#   ) +
-#   labs(x = expression(bold("log"[10]*"(time scale)")),
-#        y = "biosphere impact"
-#   ) +
-#   facet_grid(disruptor~version) +
-#   scale_x_log10(limits = c(1e+02, 1e+09), breaks = c(1e+03, 1e+06, 1e+09)) +
-#   coord_cartesian(ylim = c(-1.1, 2), clip = 'off', expand = c(0, 0)) +
-#   scale_colour_discrete(palette = plot_palette) +
-#   annotate(
-#     geom = "rect",
-#     xmin = 0, xmax = 1e+08, 
-#     ymin = 0, ymax = Inf, 
-#     alpha = 0.1, colour = NA, fill = "steelblue"
-#   ) +
-#   annotate(
-#     geom = "rect",
-#     xmin = 0, xmax = 1e+06, 
-#     ymin = 0, ymax = -1.1, 
-#     alpha = 0.1, colour = NA, fill = "red"
-#   ) +
-#   geom_hline(yintercept = 0, colour = "grey50", linewidth = 1) +
-#   geom_line(
-#     data = disruptors, 
-#     aes(x = x, y = y,
-#         colour = version,
-#         linetype = disruptor
-#     ),
-#     linewidth = line_width/.pt
-#   )
-# ggsave(
-#   filename = file.path(dir_plots, "fig_X_schematic_panel.png"),
-#   width = 300,
-#   height = 200,
-#   units = "mm",
-#   dpi = 600,
-#   bg = "white"
-# )  
-
+# END ----
