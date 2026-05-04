@@ -179,7 +179,7 @@ ggsave(
   bg = "white"
 )  
 
-# plot figure 3: habitability change and duration ----
+# plot figure s1: habitability change and duration ----
 habitability_lim_max <- max(data_to_plot$change_max, na.rm = TRUE)
 habitability_lim_min <- min(data_to_plot$change_min, na.rm = TRUE)
 habitability_lim <- max(abs(habitability_lim_max), abs(habitability_lim_min), na.rm = TRUE) + 1
@@ -288,7 +288,7 @@ fig3_habitability <- data_to_plot %>%
 print(fig3_habitability)
 
 ggsave(
-  filename = file.path(dir_plots, "fig_3_deep_time_habitability.png"),
+  filename = file.path(dir_plots, "fig_s1_deep_time_habitability.png"),
   plot = fig3_habitability, 
   width = 169.9,
   height = 150,
@@ -298,7 +298,7 @@ ggsave(
   )  
 
 
-# plot figure 5: change rates ----
+# plot figure 3: change rates ----
 data_to_plot_rates <- data_to_plot %>%
   dplyr::mutate(
     type = ordered(type, 
@@ -380,7 +380,7 @@ fig5_rates_of_change <- data_to_plot_rates %>%
 print(fig5_rates_of_change)
 
 ggsave(
-  filename = file.path(dir_plots, "fig_5_rates_of_change_ordered.png"),
+  filename = file.path(dir_plots, "fig_3_rates_of_change_ordered.png"),
   plot = fig5_rates_of_change, 
   width = 169.6,
   height = 160,
