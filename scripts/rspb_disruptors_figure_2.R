@@ -450,7 +450,7 @@ ggplot() +
     hjust = 0, vjust = 0.5, fontface = "italic", size = 1.3*point_size)
 
 ggsave(
-  filename = file.path(dir_plots, "fig_s2_schematic.png"),
+  filename = file.path(dir_plots, "fig_2_schematic.png"),
   width = 170,
   height = 99,
   units = "mm",

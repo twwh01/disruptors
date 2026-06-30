@@ -36,7 +36,7 @@ data_event_durations <- infile %>%
 data_event_biosphere <- infile %>%
   openxlsx2::wb_to_df(
     sheet = "table_s5_biosphere_changes", 
-    start_row = 1, cols = c(1:11), skip_empty_rows = TRUE, skip_empty_cols = TRUE
+    start_row = 1, cols = c(1:13), skip_empty_rows = TRUE, skip_empty_cols = TRUE
   ) %>%
   dplyr::select(-change_group) %>%
   dplyr::mutate(change_value = as.numeric(change_value))
@@ -113,8 +113,8 @@ data_to_plot <- data_event_durations %>%
   )
 
 
-# plot figure 2: timescales ----
-fig2_timescales <- data_to_plot %>%
+# plot figure S1: timescales ----
+figS1_timescales <- data_to_plot %>%
   ggplot(aes(y = interval_abbreviation, colour = type_labels)) +
   scale_x_log10() +
   scale_y_discrete() +
@@ -167,11 +167,11 @@ fig2_timescales <- data_to_plot %>%
   # add data
   geom_linerange(aes(xmin = event_duration_min_yr, xmax = event_duration_max_yr)) +
   geom_point(aes(x = event_duration_est_yr))
-print(fig2_timescales)
+print(figS1_timescales)
 
 ggsave(
-  filename = file.path(dir_plots, "fig_2_event_timescales.png"),
-  plot = fig2_timescales, 
+  filename = file.path(dir_plots, "fig_S1_event_timescales.png"),
+  plot = figS1_timescales, 
   width = 169.9,
   height = 150,
   units = "mm",
@@ -179,12 +179,12 @@ ggsave(
   bg = "white"
 )  
 
-# plot figure s1: habitability change and duration ----
+# plot figure S2: habitability change and duration ----
 habitability_lim_max <- max(data_to_plot$change_max, na.rm = TRUE)
 habitability_lim_min <- min(data_to_plot$change_min, na.rm = TRUE)
 habitability_lim <- max(abs(habitability_lim_max), abs(habitability_lim_min), na.rm = TRUE) + 1
 
-fig3_habitability <- data_to_plot %>% 
+figS2_habitability <- data_to_plot %>% 
   dplyr::mutate(
     event_duration_min_yr = dplyr::case_when(
       event_duration_min_yr < 2e-01 ~ 2e-01, 
@@ -285,11 +285,11 @@ fig3_habitability <- data_to_plot %>%
   annotate(geom = "segment", x = 1.5e-01, xend = 1.5e-01, y = -0.1, yend = -1*(habitability_lim-1),
            linewidth = 1*line_width/.pt, colour = plot_palette[2], 
            arrow = arrow(length = unit(0.3, "cm")), lineend = "round", linejoin = "bevel") 
-print(fig3_habitability)
+print(figS2_habitability)
 
 ggsave(
-  filename = file.path(dir_plots, "fig_s1_deep_time_habitability.png"),
-  plot = fig3_habitability, 
+  filename = file.path(dir_plots, "fig_S2_deep_time_habitability.png"),
+  plot = figS2_habitability, 
   width = 169.9,
   height = 150,
   units = "mm",
@@ -321,14 +321,14 @@ data_to_plot_rates_labels <- data_to_plot_rates %>%
                    max_rate = max(change_rate_mean, na.rm = TRUE)
   )
 
-fig5_rates_of_change <- data_to_plot_rates %>%
+fig3_rates_of_change <- data_to_plot_rates %>%
   ggplot(
     aes(x = change_rate_mean, y = interval_abbreviation, 
         fill = type, colour = type,
         alpha = type_labels, size = type_labels,
         shape = change_type)) +
   scale_x_continuous(expand = expansion(add = 2),
-                     name = expression("pseudo-log"[10]*"(% variable change per Myr)")) +
+                     name = expression("rate of biosphere change [pseudo-log"[10]*"(% variable change per Myr)]")) +
   scale_y_discrete() +
   scale_shape_manual(values = c(21:24), name = "Biosphere variable") +
   scale_fill_manual(values = c("persistent" = plot_palette[5], 
@@ -377,11 +377,11 @@ fig5_rates_of_change <- data_to_plot_rates %>%
          colour = guide_legend(order = 1, override.aes = list(size = 5)),
          shape = guide_legend(order = 2, override.aes = list(size = 5)), 
          alpha = guide_legend(order = 3), size = guide_legend(order = 3))
-print(fig5_rates_of_change)
+print(fig3_rates_of_change)
 
 ggsave(
   filename = file.path(dir_plots, "fig_3_rates_of_change_ordered.png"),
-  plot = fig5_rates_of_change, 
+  plot = fig3_rates_of_change, 
   width = 169.6,
   height = 160,
   units = "mm",
