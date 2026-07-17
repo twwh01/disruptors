@@ -1,3 +1,7 @@
+# this script produces the data-derived figures and supplementary figures
+# for Wong Hearing et al. 2026 (bioRxiv)
+
+
 # clear the decks ----
 rm(list = ls())
 
@@ -222,8 +226,8 @@ figS2_habitability <- data_to_plot %>%
          shape = guide_legend(order = 2), 
          alpha = guide_legend(order = 3), 
          size = guide_legend(order = 3)) +
-  labs(x = expression(bold("log"[10]*"(duration in years)")),
-       y = expression(bold("planetary habitability (pseudo-log"[10]*"[variable change])"))) +
+  labs(x = expression(bold("log"[10]*"(Duration [years])")),
+       y = expression(bold("Planetary habitability (pseudo-log"[10]*"[variable change])"))) +
   scale_x_log10() +
   scale_y_continuous() +
   scale_shape_manual(values = c(21:24), name = "Biosphere variable") +
@@ -328,7 +332,7 @@ fig3_rates_of_change <- data_to_plot_rates %>%
         alpha = type_labels, size = type_labels,
         shape = change_type)) +
   scale_x_continuous(expand = expansion(add = 2),
-                     name = expression("rate of biosphere change [pseudo-log"[10]*"(% variable change per Myr)]")) +
+                     name = expression(bold("Rate of biosphere change [pseudo-log"[10]*"(% variable change per Myr)]"))) +
   scale_y_discrete() +
   scale_shape_manual(values = c(21:24), name = "Biosphere variable") +
   scale_fill_manual(values = c("persistent" = plot_palette[5], 
@@ -383,7 +387,7 @@ ggsave(
   filename = file.path(dir_plots, "fig_3_rates_of_change_ordered.png"),
   plot = fig3_rates_of_change, 
   width = 169.6,
-  height = 160,
+  height = 180,
   units = "mm",
   dpi = 600,
   bg = "white"

@@ -40,23 +40,24 @@ plot_palette <- viridis::viridis(n = 6, begin = 0.1, end = 0.9)
 # dummy data ----
 ## time scale ----
 data_time_scale <- data.frame(
-  label = c(
-    # "years", 
-    # "decades", 
-    "centuries",
-    "kiloyears", 
-    "megayears", 
-    "gigayears"
-  ),
-  value = c(
-    # 0,
-    # 1,
-    1e+02,
-    1e+03,
-    1e+06, 
-    1e+09
+  label = c(#"years", 
+            #"decades", 
+            "centuries",
+            "millennia", 
+            "million\nyears", 
+            "billion\nyears"
+            # "kiloyears", 
+            # "megayears", 
+            # "gigayears"
+            ),
+  value = c(#0,
+            #1,
+            1e+02,
+            1e+03,
+            1e+06, 
+            1e+09
+            )
   )
-)
 
 ### transient timescale ----
 # transient disruptors operate on timescales of <1e+01 to 4e+06 years
@@ -101,11 +102,9 @@ simple_t_y <- function(x) {
     )
   )
 }
-simple_t <- data.frame(
-  'disruptor' = 'transient', 
-  'version' = 'simple',
-  'x' = x_t, 'y' = simple_t_y(x_t)
-)
+simple_t <- data.frame('disruptor' = 'Transient', 
+                       'version' = 'simple',
+                       'x' = x_t, 'y' = simple_t_y(x_t))
 
 ### simple transient rapid recovery ----
 # assume 1:1 linear decline to nadir of -1
@@ -123,11 +122,9 @@ fast_t_y <- function(x) {
     )
   )
 }
-fast_t <- data.frame(
-  'disruptor' = 'transient', 
-  'version' = 'fast recovery',
-  'x' = x_t, 'y' = fast_t_y(x_t)
-)
+fast_t <- data.frame('disruptor' = 'Transient', 
+                     'version' = 'fast recovery',
+                     'x' = x_t, 'y' = fast_t_y(x_t))
 
 ### simple transient slow recovery ----
 # assume 1:1 linear decline to nadir of -1
@@ -145,13 +142,11 @@ slow_t_y <- function(x) {
     )
   )
 }
-slow_t <- data.frame(
-  'disruptor' = 'transient', 
-  'version' = 'slow recovery',
-  'x' = x_t, 'y' = slow_t_y(x_t)
-)
+slow_t <- data.frame('disruptor' = 'Transient', 
+                     'version' = 'slow recovery',
+                     'x' = x_t, 'y' = slow_t_y(x_t))
 
-### simple transient bolide impact ----
+### simple transient asteroid impact ----
 # assume 1:1 linear decline to nadir of -1 over 1e+02 years
 # assume plateau to 1e+06 years
 # assume 1:1 linear recovery to 0 after event
@@ -173,11 +168,9 @@ kpg_t_y <- function(x) {
     )
   )
 }
-kpg_t <- data.frame(
-  'disruptor' = 'transient', 
-  'version' = 'bolide impact',
-  'x' = x_t, 'y' = kpg_t_y(x_t)
-)
+kpg_t <- data.frame('disruptor' = 'Transient', 
+                    'version' = 'asteroid impact',
+                    'x' = x_t, 'y' = kpg_t_y(x_t))
 
 ## persistent disruptors functions ----
 ### simple persistent simple recovery ----
@@ -195,11 +188,9 @@ simple_p_y <- function(x) {
     )
   )
 }
-simple_p <- data.frame(
-  'disruptor' = 'persistent', 
-  'version' = 'simple',
-  'x' = x_p, 'y' = simple_p_y(x_p)
-)
+simple_p <- data.frame('disruptor' = 'Persistent', 
+                       'version' = 'simple',
+                       'x' = x_p, 'y' = simple_p_y(x_p))
 
 ### simple persistent fast ----
 # assume 2:1 linear increase to peak of +2 then plateau
@@ -221,11 +212,9 @@ fast_p_y <- function(x) {
     )  
   )
 }
-fast_p <- data.frame(
-  'disruptor' = 'persistent', 
-  'version' = 'fast',
-  'x' = x_p, 'y' = fast_p_y(x_p)
-)
+fast_p <- data.frame('disruptor' = 'Persistent', 
+                     'version' = 'fast',
+                     'x' = x_p, 'y' = fast_p_y(x_p))
 
 ### simple persistent slow ----
 # assume 0.5:1 linear increase to peak of +1.5 then plateau
@@ -242,11 +231,9 @@ slow_p_y <- function(x) {
     )  
   )
 }
-slow_p <- data.frame(
-  'disruptor' = 'persistent', 
-  'version' = 'slow',
-  'x' = x_p, 'y' = slow_p_y(x_p)
-)
+slow_p <- data.frame('disruptor' = 'Persistent', 
+                     'version' = 'slow',
+                     'x' = x_p, 'y' = slow_p_y(x_p))
 
 ### gain after initial harm ----
 # assume linear harm for duration of transient disruptor
@@ -264,11 +251,9 @@ initial_harm_p_y <- function(x) {
     )
   )
 }
-initial_harm_p <- data.frame(
-  'disruptor' = 'persistent', 
-  'version' = 'initial harm',
-  'x' = x_p, 'y' = initial_harm_p_y(x_p)
-)
+initial_harm_p <- data.frame('disruptor' = 'Persistent', 
+                             'version' = 'initial harm',
+                             'x' = x_p, 'y' = initial_harm_p_y(x_p))
 
 ## human disruptor functions ----
 ### simple human decline ----
@@ -286,11 +271,9 @@ human_t_y <- function(x) {
     )
   )
 }
-human_t <- data.frame(
-  'disruptor' = 'human', 
-  'version' = 'business as usual',
-  'x' = x_h, 'y' = human_t_y(x_h)
-)
+human_t <- data.frame('disruptor' = 'Human', 
+                      'version' = 'business as usual',
+                      'x' = x_h, 'y' = human_t_y(x_h))
 
 ### human recovery ----
 # assume 1:1 linear decrease towards nadir of -0.3 at 3e+03 years
@@ -314,52 +297,39 @@ human_p_y <- function(x) {
     )
   )
 }
-human_p <- data.frame(
-  'disruptor' = 'human', 
-  'version' = 'sustainable stewardship',
-  'x' = x_h, 'y' = human_p_y(x_h)
-)
+human_p <- data.frame('disruptor' = 'Human', 
+                      'version' = 'sustainable stewardship',
+                      'x' = x_h, 'y' = human_p_y(x_h))
 
 ## collate data ----
-disruptors <- rbind(
-  simple_t, 
-  fast_t, 
-  slow_t,
-  kpg_t,
-  simple_p, 
-  fast_p,
-  slow_p, 
-  initial_harm_p, 
-  human_t, 
-  human_p
-) 
+disruptors <- rbind(simple_t, 
+                    fast_t, 
+                    slow_t,
+                    kpg_t,
+                    simple_p, 
+                    fast_p,
+                    slow_p, 
+                    initial_harm_p, 
+                    human_t, 
+                    human_p) 
 
 ## summarise data ----
 disruptors_summary <- disruptors |> 
-  dplyr::mutate(
-    kpg = dplyr::case_when(version == "bolide impact" ~ "K-Pg")
-  ) |> 
+  dplyr::mutate(kpg = dplyr::case_when(version == "asteroid impact" ~ "K-Pg")) |> 
   dplyr::group_by(x, disruptor, kpg) |> 
-  dplyr::summarise(
-    lower_bound = min(y, na.rm = TRUE), 
-    upper_bound = max(y, na.rm = TRUE), 
-    average = mean(y, na.rm = TRUE)
-  ) |>
-  dplyr::mutate(
-    lower_bound = dplyr::case_when(is.infinite(lower_bound) ~ NA, .default = lower_bound), 
-    upper_bound = dplyr::case_when(is.infinite(upper_bound) ~ NA, .default = upper_bound), 
-    average = dplyr::case_when(is.infinite(average) ~ NA, .default = average), 
-    disruptor = ordered(disruptor, levels = c("persistent", "transient", "human"))
-  )
+  dplyr::summarise(lower_bound = min(y, na.rm = TRUE), 
+                   upper_bound = max(y, na.rm = TRUE), 
+                   average = mean(y, na.rm = TRUE)) |>
+  dplyr::mutate(lower_bound = dplyr::case_when(is.infinite(lower_bound) ~ NA, .default = lower_bound), 
+                upper_bound = dplyr::case_when(is.infinite(upper_bound) ~ NA, .default = upper_bound), 
+                average = dplyr::case_when(is.infinite(average) ~ NA, .default = average), 
+                disruptor = ordered(disruptor, levels = c("Persistent", "Transient", "Human")))
 
 disruptors_summary_main <- disruptors_summary |> dplyr::filter(is.na(kpg))
 disruptors_summary_kpg <- disruptors_summary |> 
   dplyr::filter(!is.na(kpg)) |>
-  dplyr::mutate(
-    upper_bound = disruptors_summary_main$lower_bound[
-      disruptors_summary_main$disruptor == "transient" & disruptors_summary_main$x == x
-    ]
-  )
+  dplyr::mutate(upper_bound = disruptors_summary_main$lower_bound[
+    disruptors_summary_main$disruptor == "Transient" & disruptors_summary_main$x == x])
 
 # plot data ----
 ggplot() +
@@ -367,11 +337,11 @@ ggplot() +
   theme(plot.margin = margin(10, 10, 7, 10, unit = 'pt'), 
         axis.text = element_blank(), 
         axis.title.y = element_text(size = 5*point_size, face = 'bold', angle = 90, vjust = 1, hjust = 0.5),
-        axis.title.x = element_text(size = 5*point_size, face = 'bold', angle = 0, vjust = -1), 
+        axis.title.x = element_text(size = 5*point_size, face = 'bold', angle = 0, vjust = 0), # vjust = -1), 
         strip.background = element_blank(), 
-        strip.text = element_text(size = 5*point_size, face = 'bold', vjust = 1)
-  ) +
-  labs(x = expression(bold("log"[10]*"(years)")), y = "planetary habitability") +
+        strip.text = element_text(size = 5*point_size, face = 'bold', vjust = 1)) +
+  labs(x = expression(bold("log"[10]*"(Years)")), 
+       y = "Planetary habitability") +
   facet_grid(~disruptor) +
   scale_x_log10(limits = c(x_t_min, 1e+09)) +
   coord_cartesian(ylim = c(-2, 2), clip = 'off') +
@@ -404,59 +374,68 @@ ggplot() +
             angle = 90, hjust = 1, vjust = 0,
             size = 1.5*point_size, colour = 'black', fontface = "bold") +
   ## y-axis biosphere labels
-  geom_segment(
-    data = data.frame(
-      x = 1e+02, xend = 1e+02, y = 0.1, yend = 1, 
-      disruptor = ordered("persistent", levels = c("persistent", "transient", "human"))),
-    aes(x = x, xend = xend, y = y, yend = yend), 
-    linewidth = 1.7*line_width, colour = plot_palette[4], 
-    arrow = arrow(length = unit(0.2, "cm")), lineend = "round", linejoin = "bevel"
-  ) +
-  geom_text(data = data.frame(
-    x = 4e+01, y = 0.5, label = "net gain", 
-    disruptor = ordered("persistent", levels = c("persistent", "transient", "human"))),
-    aes(x = x, y = y, label = label), 
-    colour = plot_palette[4], vjust = 0.3, hjust = 0.4, angle = 90, size = 1.8*point_size, fontface = "bold"
-  ) +
-  geom_segment(
-    data = data.frame(
-      x = 1e+02, xend = 1e+02, y = -0.1, yend = -1, 
-      disruptor = ordered("persistent", levels = c("persistent", "transient", "human"))),
-    aes(x = x, xend = xend, y = y, yend = yend), 
-    linewidth = 1.7*line_width, colour = plot_palette[2], 
-    arrow = arrow(length = unit(0.2, "cm")), lineend = "round", linejoin = "bevel"
-  ) +
-  geom_text(data = data.frame(
-    x = 4e+01, y = -0.5, label = "net loss", 
-    disruptor = ordered("persistent", levels = c("persistent", "transient", "human"))),
-    aes(x = x, y = y, label = label), 
-    colour = plot_palette[2], vjust = 0.3, hjust = 0.6, angle = 90, size = 1.8*point_size, fontface = "bold"
-  ) +
+  geom_segment(data = data.frame(x = 1e+02, xend = 1e+02, y = 0.1, yend = 1, 
+                                 disruptor = ordered("Persistent", levels = c("Persistent", "Transient", "Human"))),
+               aes(x = x, xend = xend, y = y, yend = yend), 
+               linewidth = 1.7*line_width, colour = plot_palette[4], 
+               arrow = arrow(length = unit(0.2, "cm")), lineend = "round", linejoin = "bevel") +
+  geom_text(data = data.frame(x = 4e+01, 
+                              y = 0.5, 
+                              label = "net gain", 
+                              disruptor = ordered("Persistent", levels = c("Persistent", "Transient", "Human"))),
+            aes(x = x, y = y, label = label), 
+            colour = plot_palette[4], vjust = 0.3, hjust = 0.4, angle = 90, size = 1.8*point_size, fontface = "bold") +
+  geom_segment(data = data.frame(x = 1e+02, xend = 1e+02, 
+                                 y = -0.1, yend = -1, 
+                                 disruptor = ordered("Persistent", levels = c("Persistent", "Transient", "Human"))),
+               aes(x = x, xend = xend, y = y, yend = yend), 
+               linewidth = 1.7*line_width, colour = plot_palette[2], arrow = arrow(length = unit(0.2, "cm")), lineend = "round", linejoin = "bevel") +
+  geom_text(data = data.frame(x = 4e+01, 
+                              y = -0.5, 
+                              label = "net loss", 
+                              disruptor = ordered("Persistent", levels = c("Persistent", "Transient", "Human"))),
+            aes(x = x, y = y, label = label), 
+            colour = plot_palette[2], vjust = 0.3, hjust = 0.6, angle = 90, size = 1.8*point_size, fontface = "bold") +
   # add data
   ## main data
   geom_ribbon(data = disruptors_summary_main,
               aes(x = x, ymin = lower_bound, ymax = upper_bound, colour = disruptor, fill = disruptor), 
               linewidth = 1*line_width/.pt, alpha = 0.25) +
   geom_ribbon(data = disruptors_summary_kpg, 
-              aes(x = x, ymin = lower_bound, ymax = upper_bound), #colour = "bolide impact"),
-              colour = "black", fill = "grey50",
+              aes(x = x, ymin = lower_bound, ymax = upper_bound), #colour = "asteroid impact"),
+              colour = "black", fill = "grey75",
               linetype = "dotted", linewidth = 2*line_width/.pt, alpha = 0.25) +
-  ## bolide impact data
-  geom_text(
-    data = data.frame(
-      x = 4e+02, y = -0.5, label = "bolide impact", 
-      disruptor = ordered("transient", levels = c("persistent", "transient", "human"))),
-    aes(x = x, y = y, label = label), 
-    hjust = 0, vjust = 0.5, fontface = "italic", size = 1.3*point_size)
+  ## asteroid impact data
+  geom_text(data = data.frame(x = 1e+04, 
+                              y = -0.5, 
+                              label = "asteroid\nimpact", 
+                              disruptor = ordered("Transient", levels = c("Persistent", "Transient", "Human"))),
+            aes(x = x, y = y, label = label), 
+            colour = "grey50",
+            hjust = 0.5, vjust = 0.5, fontface = "italic", size = 1.5*point_size) +
+  ## human uncertainty label
+  geom_text(data = data.frame(x = rep(3e+03, 2), 
+                              y = c(-0.15, 0.15), 
+                              label = rep("?", 2), 
+                              disruptor = ordered("Human", levels = c("Persistent", "Transient", "Human"))),
+            aes(x = x, y = y, label = label),
+            colour = c(plot_palette[2], plot_palette[4]),
+            hjust = 0, vjust = 0.5, fontface = "bold.italic", size = 2*point_size) +
+  geom_text(data = data.frame(x = 2e+02, 
+                              y = 0.1, 
+                              label = "humans so far", 
+                              disruptor = ordered("Human", levels = c("Persistent", "Transient", "Human"))),
+            aes(x = x, y = y, label = label),
+            colour = "grey50",
+            angle = 90, hjust = 0, vjust = -0.7, fontface = "italic", size = 1.5*point_size)
 
-ggsave(
-  filename = file.path(dir_plots, "fig_2_schematic.png"),
-  width = 170,
-  height = 99,
-  units = "mm",
-  dpi = 600,
-  bg = "white"
-)
+# save figure
+ggsave(filename = file.path(dir_plots, "fig_2_schematic.png"),
+       width = 170,
+       height = 99,
+       units = "mm",
+       dpi = 600,
+       bg = "white")
 
 
 # END ----
