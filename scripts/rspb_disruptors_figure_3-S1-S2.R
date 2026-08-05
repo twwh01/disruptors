@@ -320,17 +320,17 @@ data_to_plot_rates <- data_to_plot %>%
   )
 
 data_to_plot_rates_labels <- data_to_plot_rates %>%
-  dplyr::group_by(interval_abbreviation, age_estimate_ma, ) %>%
+  dplyr::group_by(interval_abbreviation, age_estimate_ma, type, type_labels) %>%
   dplyr::summarise(min_rate = min(change_rate_mean, na.rm = TRUE),
-                   max_rate = max(change_rate_mean, na.rm = TRUE)
-  )
+                   max_rate = max(change_rate_mean, na.rm = TRUE), 
+                   .groups = "keep"
+  ) %>% 
+  dplyr::mutate(fontface = ifelse(type_labels == "humans", "bold", "plain"))
 
-fig3_rates_of_change <- data_to_plot_rates %>%
-  ggplot(
-    aes(x = change_rate_mean, y = interval_abbreviation, 
-        fill = type, colour = type,
-        alpha = type_labels, size = type_labels,
-        shape = change_type)) +
+fig3_rates_of_change <- ggplot(mapping = aes(y = interval_abbreviation,
+                                             fill = type,
+                                             colour = type,
+                                             alpha = type_labels)) +
   scale_x_continuous(expand = expansion(add = 2),
                      name = expression(bold("Rate of biosphere change [pseudo-log"[10]*"(% variable change per Myr)]"))) +
   scale_y_discrete() +
@@ -342,7 +342,7 @@ fig3_rates_of_change <- data_to_plot_rates %>%
                                "transient" = plot_palette[1]),
                     aesthetics = c("colour", "fill"),
                     name = "Disruptor type") +
-  scale_alpha_manual(values = c("geological" = 0.5, "humans" = 0.75),
+  scale_alpha_manual(values = c("geological" = 0.5, "humans" = 0.8),
                      breaks = c("humans", "geological"), 
                      name = "Scope") +
   scale_size_manual(values = c("geological" = point_size/.pt, "humans" = 2*(point_size/.pt)),
@@ -363,31 +363,49 @@ fig3_rates_of_change <- data_to_plot_rates %>%
     legend.box.margin = margin(4,4,4,4, unit = "pt"),
     legend.title = element_text(size = (point_size-2), face = "bold"),
     legend.text = element_text(size = (point_size-2))) +
-  geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.5*line_width/.pt, colour = "grey75") +
+  geom_vline(xintercept = 0, linetype = "solid", linewidth = 0.25*line_width/.pt, colour = "grey75") +
   geom_hline(yintercept = 0, linetype = "solid", linewidth = line_width/.pt, colour = "black") +
-  geom_point() +
-  annotate(geom = "text",
-           x = data_to_plot_rates_labels$min_rate - 0.4,
-           y = data_to_plot_rates_labels$interval_abbreviation, 
-           label = data_to_plot_rates_labels$interval_abbreviation, 
-           angle = 0, hjust = 1, vjust = 0.5, size = (point_size-2)/.pt) +
+  geom_linerange(data = data_to_plot_rates_labels, 
+                 mapping = aes(xmin = min_rate, 
+                               xmax = max_rate), 
+                 linewidth = 3) +
+  geom_point(data = data_to_plot_rates, 
+             mapping = aes(x = change_rate_mean,
+                           # size = type_labels,
+                           shape = change_type), 
+             size = point_size/.pt) +
+  geom_text(data = data_to_plot_rates_labels, 
+            mapping = aes(x = min_rate - 0.4,
+                          y = interval_abbreviation, 
+                          label = interval_abbreviation, 
+                          fontface = fontface),
+            alpha = 1,
+            angle = 0, hjust = 1, vjust = 0.5, size = (point_size-2)/.pt) +
+  geom_hline(yintercept = c(1.45, 4.5, 29.45, 30.5, 34.45, 35.5),
+             linetype = "dashed", linewidth = 0.25*line_width/.pt, colour = "grey75") +
   annotate(geom = "text",
            x = data_to_plot_rates_labels$max_rate + 0.3,
            y = data_to_plot_rates_labels$interval_abbreviation, 
            label = paste0("(", data_to_plot_rates_labels$age_estimate_ma, " Ma)"),
            angle = 0, hjust = 0, vjust = 0.5, size = (point_size-2)/.pt, fontface = "italic") +
   coord_cartesian(clip = "off") +
+  labs(caption = paste0("Bars show the range of rates of change for each episode.", 
+                        "Vertical solid line at no biosphere change.", 
+                        "Horizontal dashed lines and bold text highlight humans ", 
+                        "in the context of geological biosphere disruptors.\n")) +
   guides(fill = guide_legend(order = 1, override.aes = list(size = 5)), 
          colour = guide_legend(order = 1, override.aes = list(size = 5)),
          shape = guide_legend(order = 2, override.aes = list(size = 5)), 
-         alpha = guide_legend(order = 3), size = guide_legend(order = 3))
+         fontface = guide_none(), 
+         alpha = guide_none(), # guide_legend(order = 3),
+         size = guide_none()) #guide_legend(order = 3))
 print(fig3_rates_of_change)
 
 ggsave(
   filename = file.path(dir_plots, "fig_3_rates_of_change_ordered.png"),
   plot = fig3_rates_of_change, 
   width = 169.6,
-  height = 180,
+  height = 190,
   units = "mm",
   dpi = 600,
   bg = "white"
