@@ -335,13 +335,15 @@ disruptors_summary_kpg <- disruptors_summary |>
 ggplot() +
   theme_void() +
   theme(plot.margin = margin(10, 10, 7, 10, unit = 'pt'), 
+        plot.title = element_text(size = 6*point_size, hjust = 0.5, vjust = 1), 
         axis.text = element_blank(), 
-        axis.title.y = element_text(size = 5*point_size, face = 'bold', angle = 90, vjust = 1, hjust = 0.5),
-        axis.title.x = element_text(size = 5*point_size, face = 'bold', angle = 0, vjust = 0), # vjust = -1), 
+        axis.title.y = element_text(size = 4.5*point_size, face = 'bold', angle = 90, vjust = 1, hjust = 0.5),
+        axis.title.x = element_text(size = 4.5*point_size, face = 'bold', angle = 0, vjust = 0), # vjust = -1), 
         strip.background = element_blank(), 
-        strip.text = element_text(size = 5*point_size, face = 'bold', vjust = 1)) +
+        strip.text = element_text(size = 4.5*point_size, face = 'bold', vjust = 0, margin = unit(c(10, 0, 0, 0), "pt"))) +
   labs(x = expression(bold("log"[10]*"(Years)")), 
-       y = "Planetary habitability") +
+       y = "Planetary habitability", 
+       title = "Potential range of biosphere impacts caused by persistent, transient, and human disruptors") +
   facet_grid(~disruptor) +
   scale_x_log10(limits = c(x_t_min, 1e+09)) +
   coord_cartesian(ylim = c(-2, 2), clip = 'off') +
@@ -413,26 +415,70 @@ ggplot() +
             aes(x = x, y = y, label = label), 
             colour = "grey50",
             hjust = 0.5, vjust = 0.5, fontface = "italic", size = 1.5*point_size) +
-  ## human uncertainty label
+  ## human uncertainty "?" labels
   geom_text(data = data.frame(x = rep(3e+03, 2), 
                               y = c(-0.15, 0.15), 
                               label = rep("?", 2), 
-                              disruptor = ordered("Human", levels = c("Persistent", "Transient", "Human"))),
+                              disruptor = ordered("Human", 
+                                                  levels = c("Persistent", "Transient", "Human"))),
             aes(x = x, y = y, label = label),
             colour = c(plot_palette[2], plot_palette[4]),
             hjust = 0, vjust = 0.5, fontface = "bold.italic", size = 2*point_size) +
+  ## humans so far label
   geom_text(data = data.frame(x = 2e+02, 
                               y = 0.1, 
                               label = "humans so far", 
-                              disruptor = ordered("Human", levels = c("Persistent", "Transient", "Human"))),
+                              disruptor = ordered("Human", 
+                                                  levels = c("Persistent", "Transient", "Human"))),
             aes(x = x, y = y, label = label),
-            colour = "grey50",
-            angle = 90, hjust = 0, vjust = -0.7, fontface = "italic", size = 1.5*point_size)
+            colour = "grey25",
+            angle = 90, hjust = 0, vjust = -0.7, fontface = "italic", size = 1.25*point_size) +
+  ## human path-dependency label
+  geom_text(data = data.frame(x = 2e+05, 
+                              y = 1.25, 
+                              label = paste0("humans' future direction\n", 
+                                             "and magnitude depends on\n", 
+                                             "the decisions we make now\n", 
+                                             "and in the near future"),
+                              disruptor = ordered("Human", 
+                                                  levels = c("Persistent", "Transient", "Human"))),
+            aes(x = x, y = y, label = label),
+            colour = "grey25",
+            angle = 0, hjust = 0.5, vjust = 0.5, fontface = "italic", size = 1.25*point_size) +
+  ## persistent disruptors impact range label
+  geom_text(data = data.frame(x = 2e+05, 
+                              y = 1.25, 
+                              label = paste0("persistent disruptors may\n", 
+                                             "initially degrade the\n", 
+                                             "incumbent biosphere before\n", 
+                                             " ultimately enhancing\n", 
+                                             "planetary habitability"),
+                              disruptor = ordered("Persistent", 
+                                                  levels = c("Persistent", "Transient", "Human"))),
+            aes(x = x, y = y, label = label),
+            colour = "grey25",
+            angle = 0, hjust = 0.5, vjust = 0.5, fontface = "italic", size = 1.25*point_size) + 
+  ## transient disruptors impact range label
+  geom_text(data = data.frame(x = 2e+05, 
+                              y = 1.25, 
+                              label = paste0("transient disruptors degrade\n", 
+                                             "the incumbent biosphere on\n", 
+                                             "geologically short timescales\n", 
+                                             "until their effects dissipate\n", 
+                                             "and the Earth system can\n",
+                                             "recover and transform in\n", 
+                                             "their absence"),
+                              disruptor = ordered("Transient", 
+                                                  levels = c("Persistent", "Transient", "Human"))),
+            aes(x = x, y = y, label = label),
+            colour = "grey25",
+            angle = 0, hjust = 0.5, vjust = 0.5, fontface = "italic", size = 1.25*point_size)
+  
 
 # save figure
 ggsave(filename = file.path(dir_plots, "fig_2_schematic.png"),
        width = 170,
-       height = 99,
+       height = 110,
        units = "mm",
        dpi = 600,
        bg = "white")
