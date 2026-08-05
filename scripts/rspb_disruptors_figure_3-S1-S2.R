@@ -390,9 +390,9 @@ fig3_rates_of_change <- ggplot(mapping = aes(y = interval_abbreviation,
            angle = 0, hjust = 0, vjust = 0.5, size = (point_size-2)/.pt, fontface = "italic") +
   coord_cartesian(clip = "off") +
   labs(caption = paste0("Bars show the range of rates of change for each episode.", 
-                        "Vertical solid line at no biosphere change.", 
+                        "Vertical solid line at no biosphere change.\n", 
                         "Horizontal dashed lines and bold text highlight humans ", 
-                        "in the context of geological biosphere disruptors.\n")) +
+                        "in the context of geological biosphere disruptors.")) +
   guides(fill = guide_legend(order = 1, override.aes = list(size = 5)), 
          colour = guide_legend(order = 1, override.aes = list(size = 5)),
          shape = guide_legend(order = 2, override.aes = list(size = 5)), 
