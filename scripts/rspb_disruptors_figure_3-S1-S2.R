@@ -144,7 +144,8 @@ data_durations_to_plot <- data_event_durations %>%
       )
     )
   ) %>%
-  dplyr::filter(interval_abbreviation %in% data_to_plot$interval_abbreviation)
+  dplyr::filter(interval_abbreviation %in% data_to_plot$interval_abbreviation) %>%
+  droplevels()
   
 
 figS1_timescales <- data_durations_to_plot %>%
