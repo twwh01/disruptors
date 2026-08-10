@@ -410,11 +410,11 @@ ggplot() +
   ## asteroid impact data
   geom_text(data = data.frame(x = 1e+04, 
                               y = -0.5, 
-                              label = "asteroid\nimpact", 
+                              label = "potential area of\nan asteroid impact", 
                               disruptor = ordered("Transient", levels = c("Persistent", "Transient", "Human"))),
             aes(x = x, y = y, label = label), 
             colour = "grey50",
-            hjust = 0.5, vjust = 0.5, fontface = "italic", size = 1.5*point_size) +
+            hjust = 0.5, vjust = 0.5, fontface = "italic", size = 1.25*point_size) +
   ## human uncertainty "?" labels
   geom_text(data = data.frame(x = rep(3e+03, 2), 
                               y = c(-0.15, 0.15), 
@@ -424,9 +424,17 @@ ggplot() +
             aes(x = x, y = y, label = label),
             colour = c(plot_palette[2], plot_palette[4]),
             hjust = 0, vjust = 0.5, fontface = "bold.italic", size = 2*point_size) +
+  ## 200 year line for humans only
+  # geom_segment(data = data.frame(x = 2e+02, 
+  #                                y = -1.3,
+  #                                yend = 2,
+  #                                disruptor = ordered("Human", 
+  #                                                    levels = c("Persistent", "Transient", "Human"))),
+  #              aes(x = x, y = y, yend = yend), 
+  #              linetype = "dashed", colour = "grey50", linewidth = 0.5*line_width) +
   ## humans so far label
   geom_text(data = data.frame(x = 2e+02, 
-                              y = 0.1, 
+                              y = -1, 
                               label = "humans so far", 
                               disruptor = ordered("Human", 
                                                   levels = c("Persistent", "Transient", "Human"))),
