@@ -118,37 +118,7 @@ data_to_plot <- data_event_durations %>%
 
 
 # plot figure S1: timescales ----
-data_durations_to_plot <- data_event_durations %>%
-  dplyr::mutate(
-    across(c(event_duration_min_yr, event_duration_max_yr, event_duration_est_yr), as.numeric),
-    
-    interval_abbreviation = ordered(
-      forcats::fct_reorder2(interval_abbreviation, desc(interval_abbreviation), age_estimate_ma)
-    ),
-    
-    type_labels = dplyr::case_when(type == "humans so far" ~ "humans",
-                                   type == "business as usual" ~ "humans",
-                                   type == "sustainable stewardship" ~ "humans",
-                                   .default = type), 
-    
-    interval_abbreviation = case_when(big5 == "yes" ~ paste0("†", interval_abbreviation), 
-                                      .default = interval_abbreviation),
-    
-    event_duration_est_yr = case_when(
-      is.na(event_duration_est_yr) ~ 0.5*(event_duration_max_yr + event_duration_min_yr),
-      .default = event_duration_est_yr
-    ),
-    
-    interval_abbreviation = ordered(forcats::fct_reorder2(
-      interval_abbreviation, desc(interval_abbreviation), age_estimate_ma
-      )
-    )
-  ) %>%
-  dplyr::filter(interval_abbreviation %in% data_to_plot$interval_abbreviation) %>%
-  droplevels()
-  
-
-figS1_timescales <- data_durations_to_plot %>%
+figS1_timescales <- data_to_plot %>%
   ggplot(aes(y = interval_abbreviation, colour = type_labels)) +
   scale_x_log10() +
   scale_y_discrete() +
@@ -156,7 +126,7 @@ figS1_timescales <- data_durations_to_plot %>%
                       name = "Disruptor type") +
   coord_cartesian(
     xlim = c(1.00e-08, 1.000e+11),
-    ylim = c(-7, as.numeric(max(data_durations_to_plot$interval_abbreviation))+0.5),
+    ylim = c(-7, as.numeric(max(data_to_plot$interval_abbreviation))+0.5),
     clip = "off"
   ) +
   theme_void() +
@@ -175,20 +145,20 @@ figS1_timescales <- data_durations_to_plot %>%
   annotate(geom = "text", y = -0.5,x = data_time_scale$value, label = data_time_scale$label,
            angle = 90, hjust = 1, vjust = 0, size = (point_size+2)/.pt, fontface = "bold") +
   annotate(geom = "text",
-           y = data_durations_to_plot$interval_abbreviation, x = data_durations_to_plot$event_duration_min_yr,
-           label = data_durations_to_plot$interval_abbreviation,
+           y = data_to_plot$interval_abbreviation, x = data_to_plot$event_duration_min_yr,
+           label = data_to_plot$interval_abbreviation,
            angle = 0, hjust = 1.1, vjust = 0.3, size = point_size/.pt, fontface = "bold") +
   annotate(geom = "text", 
-           y = data_durations_to_plot$interval_abbreviation, x = data_durations_to_plot$event_duration_max_yr,
-           label = paste0("(", as.numeric(data_durations_to_plot$age_estimate_ma), " Ma)"),
+           y = data_to_plot$interval_abbreviation, x = data_to_plot$event_duration_max_yr,
+           label = paste0("(", as.numeric(data_to_plot$age_estimate_ma), " Ma)"),
            angle = 0, hjust = -0.1, vjust = 0.3, size = point_size/.pt, fontface = "italic") +
   annotate(geom = "rect",
-           xmin = min(data_durations_to_plot$event_duration_min_yr[data_durations_to_plot$type_labels == "persistent"], na.rm = TRUE),
-           xmax = max(data_durations_to_plot$event_duration_max_yr[data_durations_to_plot$type_labels == "persistent"], na.rm = TRUE),
+           xmin = min(data_to_plot$event_duration_min_yr[data_to_plot$type_labels == "persistent"], na.rm = TRUE),
+           xmax = max(data_to_plot$event_duration_max_yr[data_to_plot$type_labels == "persistent"], na.rm = TRUE),
            ymin = 0, ymax = Inf, alpha = 0.1, colour = NA, fill = "steelblue") +
   annotate(geom = "rect",
-           xmin = min(data_durations_to_plot$event_duration_min_yr[data_durations_to_plot$type_labels == "transient"], na.rm = TRUE),
-           xmax = max(data_durations_to_plot$event_duration_max_yr[data_durations_to_plot$type_labels == "transient"], na.rm = TRUE),
+           xmin = min(data_to_plot$event_duration_min_yr[data_to_plot$type_labels == "transient"], na.rm = TRUE),
+           xmax = max(data_to_plot$event_duration_max_yr[data_to_plot$type_labels == "transient"], na.rm = TRUE),
            ymin = 0, ymax = Inf, alpha = 0.1, colour = NA, fill = "red") +
   # add data
   geom_linerange(aes(xmin = event_duration_min_yr, xmax = event_duration_max_yr)) +
